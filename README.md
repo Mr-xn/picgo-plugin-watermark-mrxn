@@ -183,7 +183,7 @@ picgo-plugin-watermark-mrxn/
 → buildInRename → beforeUpload [本插件在此] → doUpload → afterUpload
 ```
 
-#### 独立模式 (seperate)
+#### 独立模式 (separate)
 
 第二图床使用**原始输入**重新执行完整生命周期：
 
