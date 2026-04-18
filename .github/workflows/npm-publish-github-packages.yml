@@ -7,6 +7,15 @@ on:
   release:
     types: [created]
   workflow_dispatch:
+    inputs:
+      registry:
+        description: '发布目标 / Publish target'
+        required: false
+        default: 'npmjs'
+        type: choice
+        options:
+          - npmjs
+          - github
 
 jobs:
   build:
@@ -19,7 +28,7 @@ jobs:
       - run: npm install
       - run: npm test
 
-  publish-gpr:
+  publish:
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -27,11 +36,38 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Determine publish target
+        id: target
+        run: |
+          if [[ "${{ github.event.inputs.registry }}" == "github" ]]; then
+            echo "is_github=true" >> "$GITHUB_OUTPUT"
+            echo "registry_url=https://npm.pkg.github.com/" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_github=false" >> "$GITHUB_OUTPUT"
+            echo "registry_url=https://registry.npmjs.org/" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://npm.pkg.github.com/
+          registry-url: ${{ steps.target.outputs.registry_url }}
+
       - run: npm install
-      - run: npm publish
+
+      # GitHub Packages requires a scoped package name (@owner/package-name)
+      - name: Set scoped package name for GitHub Packages
+        if: steps.target.outputs.is_github == 'true'
+        run: npm pkg set name="@mr-xn/picgo-plugin-watermark-mrxn"
+
+      - name: Publish to npmjs.org
+        if: steps.target.outputs.is_github != 'true'
+        run: npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to GitHub Packages
+        if: steps.target.outputs.is_github == 'true'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
