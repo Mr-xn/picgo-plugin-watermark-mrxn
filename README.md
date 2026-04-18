@@ -113,19 +113,11 @@ npm test
 | `2-blind.png` | 嵌入盲水印后的图（同时验证提取） |
 | `3-pipeline.png` | 可见水印 + 盲水印完整流水线输出 |
 
-控制台会输出每个测试的 `PASS / FAIL` 结果，以及盲水印提取内容。
+控制台会输出每个测试的执行结果，其中部分测试会显示 `PASS / FAIL`，并打印盲水印提取内容。
 
 ### 盲水印提取工具
 
-```bash
-# 基本用法
-node extract-watermark.js <图片路径> [密码]
-
-# 示例
-node extract-watermark.js test-output/2-blind.png
-node extract-watermark.js test-output/2-blind.png 136677
-```
-
+提取命令、参数说明与示例请统一参考下方的 [盲水印检测](#盲水印检测) 章节，避免重复维护。
 ### 项目结构
 
 ```
