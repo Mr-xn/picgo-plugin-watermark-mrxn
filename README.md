@@ -47,6 +47,98 @@ npm install picgo-plugin-watermark-mrxn
    npm install @mr-xn/picgo-plugin-watermark-mrxn
    ```
 
+### 本地下载导入
+
+适用于无法访问 npm 网络、或希望使用本地修改版本的场景：
+
+1. 下载源码：
+
+   ```bash
+   # 方式一：git clone
+   git clone https://github.com/Mr-xn/picgo-plugin-watermark-mrxn.git
+
+   # 方式二：直接下载 ZIP
+   # 访问 https://github.com/Mr-xn/picgo-plugin-watermark-mrxn/archive/refs/heads/main.zip
+   # 解压到本地任意目录，例如 ~/picgo-plugin-watermark-mrxn
+   ```
+
+2. 安装插件依赖：
+
+   ```bash
+   cd picgo-plugin-watermark-mrxn
+   npm install
+   ```
+
+3. 在 PicList / PicGo 配置目录下，通过本地路径安装：
+
+   ```bash
+   # macOS
+   cd ~/Library/Application\ Support/piclist
+   npm install /本地路径/picgo-plugin-watermark-mrxn
+
+   # Windows（CMD）
+   cd %APPDATA%\piclist
+   npm install C:\本地路径\picgo-plugin-watermark-mrxn
+   ```
+
+   > 也可在 PicList / PicGo GUI 中：插件设置 → 导入本地插件 → 选择插件目录
+
+## 本地开发 & 测试
+
+### 环境要求
+
+- Node.js >= 16.0.0
+- npm >= 7
+
+### 克隆与初始化
+
+```bash
+git clone https://github.com/Mr-xn/picgo-plugin-watermark-mrxn.git
+cd picgo-plugin-watermark-mrxn
+npm install
+```
+
+### 运行测试
+
+```bash
+npm test
+```
+
+脚本会自动生成一张 800×600 渐变测试图，依次执行以下三个测试用例，并将结果保存到 `test-output/` 目录：
+
+| 输出文件 | 说明 |
+|----------|------|
+| `0-original.png` | 原始测试图 |
+| `1-visible.png` | 叠加可见水印后的图 |
+| `2-blind.png` | 嵌入盲水印后的图（同时验证提取） |
+| `3-pipeline.png` | 可见水印 + 盲水印完整流水线输出 |
+
+控制台会输出每个测试的 `PASS / FAIL` 结果，以及盲水印提取内容。
+
+### 盲水印提取工具
+
+```bash
+# 基本用法
+node extract-watermark.js <图片路径> [密码]
+
+# 示例
+node extract-watermark.js test-output/2-blind.png
+node extract-watermark.js test-output/2-blind.png 136677
+```
+
+### 项目结构
+
+```
+picgo-plugin-watermark-mrxn/
+├── src/
+│   ├── index.js              # PicGo/PicList 插件入口
+│   ├── visible-watermark.js  # 可见水印（SVG pattern + sharp）
+│   └── blind-watermark.js    # 盲水印（扩频算法）
+├── extract-watermark.js      # 独立盲水印检测 CLI
+├── test.js                   # 本地测试脚本
+└── package.json
+```
+
 ## 配置项
 
 ### 可见水印
