@@ -1,0 +1,41 @@
+{
+  "name": "picgo-plugin-watermark-mrxn",
+  "version": "1.0.0",
+  "description": "PicGo/PicList 高级水印插件：盲水印 + 满屏自适应旋转文本水印",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test.js",
+    "extract": "node extract-watermark.js"
+  },
+  "keywords": [
+    "picgo-plugin",
+    "picgo-gui-plugin",
+    "watermark",
+    "blind-watermark",
+    "steganography"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mr-xn/picgo-plugin-watermark-mrxn.git"
+  },
+  "homepage": "https://github.com/mr-xn/picgo-plugin-watermark-mrxn",
+  "bugs": {
+    "url": "https://github.com/mr-xn/picgo-plugin-watermark-mrxn/issues"
+  },
+  "author": "mrxn",
+  "license": "MIT",
+  "files": [
+    "src/",
+    "extract-watermark.js",
+    "README.md"
+  ],
+  "dependencies": {
+    "sharp": "^0.33.0"
+  },
+  "peerDependencies": {
+    "picgo": ">=1.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
