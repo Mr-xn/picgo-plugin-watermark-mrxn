@@ -3,11 +3,69 @@ const { embedBlindWatermark } = require('./blind-watermark')
 
 const PLUGIN_NAME = 'watermark-mrxn'
 
+// PicList second uploader modes
+const SECOND_UPLOADER_MODES = {
+  SAME: 'same',           // Apply same watermarks as primary (default)
+  SKIP: 'skip',           // Skip all watermarking for second uploader
+  VISIBLE_ONLY: 'visibleOnly', // Only apply visible watermark (skip blind)
+  BLIND_ONLY: 'blindOnly',    // Only apply blind watermark (skip visible)
+}
+
+/**
+ * Detect whether the current upload is targeting the PicList second uploader.
+ *
+ * PicList-Core's uploadReturnCtx() calls changeCurrentUploader() before the
+ * second upload lifecycle, which sets picBed.${type} to the second uploader's
+ * config object. We compare _id values to reliably identify the context,
+ * since PicList-Core itself uses _id for deduplication.
+ *
+ * This detection only applies in independent mode (separate). In backup mode,
+ * beforeUploadPlugins are skipped entirely, so this function is never called.
+ */
+function isSecondUploaderContext(ctx) {
+  try {
+    const enableSecondUploader = ctx.getConfig('settings.enableSecondUploader')
+    if (!enableSecondUploader) return false
+
+    const secondUploaderType = ctx.getConfig('picBed.secondUploader') || ''
+    const secondUploaderConfig = ctx.getConfig('picBed.secondUploaderConfig') || {}
+    if (!secondUploaderType || !secondUploaderConfig._id) return false
+
+    const currentUploader =
+      ctx.getConfig('picBed.uploader') ||
+      ctx.getConfig('picBed.current') ||
+      ''
+    const currentConfig = ctx.getConfig(`picBed.${currentUploader}`) || {}
+
+    return currentConfig._id && currentConfig._id === secondUploaderConfig._id
+  } catch (_) {
+    return false
+  }
+}
+
 module.exports = ctx => {
   const handle = async ctx => {
     const config = ctx.getConfig(`picgo-plugin-${PLUGIN_NAME}`) || {}
-    const enableVisible = config.enableVisible !== false
-    const enableBlind = config.enableBlind !== false
+    let enableVisible = config.enableVisible !== false
+    let enableBlind = config.enableBlind !== false
+
+    // PicList second uploader handling
+    const isSecondUploader = isSecondUploaderContext(ctx)
+    if (isSecondUploader) {
+      const mode = config.secondUploaderMode || SECOND_UPLOADER_MODES.SAME
+      ctx.log.info(`watermark-mrxn: detected PicList second uploader (independent mode), mode=${mode}`)
+
+      if (mode === SECOND_UPLOADER_MODES.SKIP) {
+        ctx.log.info('watermark-mrxn: skipping all watermarks for second uploader')
+        return ctx
+      }
+      if (mode === SECOND_UPLOADER_MODES.VISIBLE_ONLY) {
+        enableBlind = false
+      }
+      if (mode === SECOND_UPLOADER_MODES.BLIND_ONLY) {
+        enableVisible = false
+      }
+    }
 
     if (!enableVisible && !enableBlind) {
       ctx.log.info('watermark-mrxn: both watermarks disabled, skipping')
@@ -193,6 +251,20 @@ module.exports = ctx => {
         filter: v => parseInt(v, 10),
         when: answers => answers.enableBlind,
       },
+      // PicList second uploader settings
+      {
+        name: 'secondUploaderMode',
+        type: 'list',
+        message: 'PicList 第二图床水印模式（仅独立模式生效）',
+        choices: [
+          { name: '与主图床一致 (same)', value: 'same' },
+          { name: '跳过所有水印 (skip)', value: 'skip' },
+          { name: '仅可见水印 (visibleOnly)', value: 'visibleOnly' },
+          { name: '仅盲水印 (blindOnly)', value: 'blindOnly' },
+        ],
+        default: current.secondUploaderMode || 'same',
+        when: answers => answers.enableVisible || answers.enableBlind,
+      },
     ]
   }
 
@@ -215,6 +287,31 @@ module.exports = ctx => {
             '推荐处理链：格式转换 → 压缩 → EXIF清理 → [本插件] → 上传',
           ].join('\n'),
           type: 'warning',
+        })
+      },
+    },
+    {
+      label: '📋 第二图床说明',
+      handle: (ctx, guiApi) => {
+        guiApi.showMessageBox({
+          title: 'PicList 第二图床水印说明',
+          message: [
+            '当 PicList 启用「第二图床」时，水印行为取决于图床模式：',
+            '',
+            '【独立模式】',
+            '  第二图床的上传会重新执行完整的插件处理流程。',
+            '  插件可通过「第二图床水印模式」设置来控制行为：',
+            '  • same — 与主图床一致（默认）',
+            '  • skip — 跳过所有水印',
+            '  • visibleOnly — 仅添加可见水印',
+            '  • blindOnly — 仅添加盲水印',
+            '',
+            '【备份模式】',
+            '  第二图床直接使用主图床已处理好的图片（含水印），',
+            '  不再经过插件处理，因此无法单独控制。',
+            '  如需第二图床不加水印，请改用「独立模式」。',
+          ].join('\n'),
+          type: 'info',
         })
       },
     },
