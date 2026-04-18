@@ -19,7 +19,7 @@ const SECOND_UPLOADER_MODES = {
  * config object. We compare _id values to reliably identify the context,
  * since PicList-Core itself uses _id for deduplication.
  *
- * This detection only applies in independent mode (seperate). In backup mode,
+ * This detection only applies in independent mode (separate). In backup mode,
  * beforeUploadPlugins are skipped entirely, so this function is never called.
  */
 function isSecondUploaderContext(ctx) {
