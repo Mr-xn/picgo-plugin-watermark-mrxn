@@ -68,7 +68,6 @@ async function applyVisibleWatermark(imageBuffer, opts) {
   const result = await sharp(imageBuffer)
     .ensureAlpha()
     .composite([{ input: Buffer.from(svg), blend: 'over' }])
-    .png()
     .toBuffer()
 
   return result
