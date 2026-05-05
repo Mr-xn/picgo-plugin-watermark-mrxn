@@ -1,3 +1,4 @@
+const sharp = require('sharp')
 const { applyVisibleWatermark } = require('./visible-watermark')
 const { embedBlindWatermark } = require('./blind-watermark')
 
@@ -85,7 +86,16 @@ module.exports = ctx => {
         continue
       }
 
-      const ext = (item.extname || 'png').toLowerCase().replace('.', '')
+      // Use sharp to detect actual format from buffer content (magic bytes)
+      // instead of relying on item.extname which may be missing or incorrect
+      // (e.g. clipboard paste, URL without extension, custom uploaders)
+      let ext
+      try {
+        const metadata = await sharp(buffer).metadata()
+        ext = (metadata.format || '').toLowerCase()
+      } catch (_) {
+        ext = (item.extname || 'png').toLowerCase().replace('.', '')
+      }
       if (!['png', 'jpg', 'jpeg', 'webp'].includes(ext)) {
         ctx.log.info(`watermark-mrxn: item[${i}] ext=${ext} not supported, skipping`)
         continue
@@ -119,6 +129,8 @@ module.exports = ctx => {
         }
 
         ctx.output[i].buffer = buffer
+        // Both watermark functions force PNG output, so update extname accordingly
+        ctx.output[i].extname = '.png'
         if (ctx.output[i].base64Image) {
           ctx.output[i].base64Image = buffer.toString('base64')
         }
