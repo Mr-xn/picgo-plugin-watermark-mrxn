@@ -129,8 +129,14 @@ module.exports = ctx => {
         }
 
         ctx.output[i].buffer = buffer
-        // Both watermark functions force PNG output, so update extname accordingly
-        ctx.output[i].extname = '.png'
+        // Update extname from actual buffer format (handles no-extension,
+        // wrong extension, or format conversion by PicList upstream)
+        try {
+          const outMeta = await sharp(buffer).metadata()
+          if (outMeta.format) {
+            ctx.output[i].extname = `.${outMeta.format.toLowerCase()}`
+          }
+        } catch (_) {}
         if (ctx.output[i].base64Image) {
           ctx.output[i].base64Image = buffer.toString('base64')
         }
