@@ -64,6 +64,7 @@ async function embedBlindWatermark(imageBuffer, opts) {
   const image = sharp(imageBuffer)
   const meta = await image.metadata()
   const { width, height, channels } = meta
+  const inputFormat = meta.format || 'png'
 
   const totalPixels = width * height
   if (totalPixels < pixelsNeeded) {
@@ -116,7 +117,7 @@ async function embedBlindWatermark(imageBuffer, opts) {
   const result = await sharp(Buffer.from(pixels.buffer), {
     raw: { width: info.width, height: info.height, channels: ch },
   })
-    .png()
+    .toFormat(inputFormat)
     .toBuffer()
 
   return result
